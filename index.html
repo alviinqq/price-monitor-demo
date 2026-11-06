@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Competitor price monitor (demo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --surface: #fcfcfb; --card: #ffffff; --line: #e6e8eb; --grid: #eef0f2;
+    --ink: #16202a; --ink-2: #4d5a66; --ink-3: #7c8792;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --good: #0b7a4b; --good-bg: #e7f6ee; --bad: #b42318; --bad-bg: #fdeceb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Manrope", system-ui, sans-serif; background: var(--surface); color: var(--ink); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 56px; }
+  .demo { background: #16202a; color: #cfd8e1; font-size: 13px; text-align: center; padding: 8px 16px; }
+  .demo b { color: #fff; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  h1 { font-size: 30px; letter-spacing: -0.03em; margin: 0 0 4px; }
+  .sub { color: var(--ink-2); margin: 0; }
+  .updated { font-size: 13px; color: var(--ink-3); text-align: right; }
+  .updated span { display: inline-flex; align-items: center; gap: 6px; background: var(--good-bg); color: var(--good); font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 6px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+  .kpi .label { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+  .kpi .value { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
+  .kpi .hint { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; margin-bottom: 18px; }
+  .card h2 { font-size: 17px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .card .desc { color: var(--ink-2); font-size: 13px; margin: 0 0 14px; }
+  .row { display: grid; grid-template-columns: 1.45fr 1fr; gap: 18px; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin: 2px 0 10px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .chart-box { position: relative; height: 320px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--ink-3); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 0 10px 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+  .best { background: var(--good-bg); color: var(--good); font-weight: 800; border-radius: 8px; padding: 3px 7px; }
+  .delta { display: block; font-size: 11.5px; font-weight: 700; }
+  .delta.down { color: var(--good); } .delta.up { color: var(--bad); } .delta.flat { color: var(--ink-3); }
+  .oos { color: var(--ink-3); text-decoration: line-through; }
+  .oos-tag { display: block; font-size: 11px; color: var(--ink-3); text-decoration: none; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+  .drops { list-style: none; margin: 0; padding: 0; }
+  .drops li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--grid); font-size: 14px; }
+  .drops li:last-child { border-bottom: 0; }
+  .drops .pct { background: var(--good-bg); color: var(--good); font-weight: 800; border-radius: 8px; padding: 3px 8px; font-size: 13px; }
+  .drops .meta { color: var(--ink-3); font-size: 12px; }
+  .tg { margin-top: 14px; background: #eef5ff; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #184f95; }
+
+  footer { color: var(--ink-3); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: 1fr 1fr; } .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="demo"><b>Demo project.</b> AlfaTech, Voltix and MediaPlus are fictional shops with simulated prices. The scraper fetches and parses their pages every day, exactly as it would with real competitor sites.</div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Competitor price monitor</h1>
+      <p class="sub">6 products · 3 shops · daily scraping with Telegram alerts</p>
+    </div>
+    <div class="updated"><span>● Live</span><br><span id="updated" style="background:none;color:inherit;font-weight:500;padding:0">Loading…</span></div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="row">
+    <section class="card">
+      <h2>Price history</h2>
+      <p class="desc">Last 45 days. Hover the chart to compare shops on a given day.</p>
+      <div class="filters" id="filters" role="group" aria-label="Product"></div>
+      <div class="legend" id="legend"></div>
+      <div class="chart-box"><canvas id="chart" aria-label="Price history chart"></canvas></div>
+    </section>
+
+    <section class="card">
+      <h2>Price drops</h2>
+      <p class="desc">Cuts of 5% or more in the last 14 days. These are sent to Telegram.</p>
+      <ul class="drops" id="drops"></ul>
+      <div class="tg" id="tg"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Today's prices</h2>
+    <p class="desc">Cheapest offer highlighted. Change is versus yesterday.</p>
+    <div style="overflow-x:auto"><table id="table"></table></div>
+  </section>
+
+  <footer>Python + BeautifulSoup scraper · GitHub Actions schedule · Telegram Bot API · Chart.js · hosted on Vercel</footer>
+</div>
+
+<script>
+const COLORS = { alfa: "#2a78d6", voltix: "#eb6834", mediaplus: "#1baf7a" };
+const fmt = (n) => n == null ? "–" : n.toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " zł";
+const shortDate = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+let data, chart, current;
+
+fetch("data/prices.json", { cache: "no-store" }).then(r => r.json()).then(d => { data = d; render(); });
+
+function render() {
+  const H = data.history.slice(-45);
+  const last = H[H.length - 1], prev = H[H.length - 2];
+  const shops = Object.keys(data.shops), skus = Object.keys(data.products);
+
+  document.getElementById("updated").textContent =
+    "Updated " + new Date(data.updated_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+
+  // KPIs
+  const drops = recentDrops(H, 14, 5);
+  const todayDrops = drops.filter(d => d.date === last.date).length;
+  const wins = Object.fromEntries(shops.map(s => [s, 0]));
+  skus.forEach(sku => { const b = cheapest(last, sku); if (b) wins[b]++; });
+  const leader = Object.entries(wins).sort((a, b) => b[1] - a[1])[0];
+  let gapSum = 0;
+  skus.forEach(sku => {
+    const ps = shops.map(s => last.prices[s][sku]?.price).filter(Boolean);
+    gapSum += (Math.max(...ps) - Math.min(...ps)) / Math.min(...ps) * 100;
+  });
+  document.getElementById("kpis").innerHTML = [
+    ["Products tracked", skus.length, `${shops.length} shops · ${H.length} days of history`],
+    ["Price drops today", todayDrops, `${drops.length} in the last 14 days`],
+    ["Cheapest most often", data.shops[leader[0]], `${leader[1]} of ${skus.length} products today`],
+    ["Average price gap", (gapSum / skus.length).toFixed(1) + "%", "between cheapest and priciest shop"],
+  ].map(([l, v, h]) => `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h}</div></div>`).join("");
+
+  // Filters + legend
+  current = current || skus[0];
+  const f = document.getElementById("filters");
+  f.innerHTML = skus.map(s => `<button class="chip" data-sku="${s}" aria-pressed="${s === current}">${data.products[s].replace("Wireless ", "")}</button>`).join("");
+  f.onclick = e => { const b = e.target.closest(".chip"); if (!b) return; current = b.dataset.sku; render(); };
+  document.getElementById("legend").innerHTML = shops.map(s => `<span><i style="background:${COLORS[s]}"></i>${data.shops[s]}</span>`).join("");
+
+  drawChart(H, shops);
+
+  // Drops list
+  document.getElementById("drops").innerHTML = drops.slice(-7).reverse().map(d =>
+    `<li><span class="pct">${d.change}%</span><span><b>${data.products[d.sku]}</b><br><span class="meta"><span class="dot" style="background:${COLORS[d.shop]}"></span>${data.shops[d.shop]} · ${shortDate(d.date)}</span></span><span class="num">${fmt(d.new)}</span></li>`
+  ).join("") || `<li>No drops in the last 14 days.</li>`;
+
+  const latest = drops[drops.length - 1];
+  document.getElementById("tg").innerHTML = latest
+    ? `🔔 Telegram alert sent ${shortDate(latest.date)}: <b>📉 Competitors cut prices</b> · ${data.products[latest.sku]} at ${data.shops[latest.shop]}: ${fmt(latest.old)} → <b>${fmt(latest.new)}</b> (${latest.change}%)`
+    : "🔔 Alerts go to Telegram as soon as a competitor cuts a price by 5% or more.";
+
+  // Table
+  const head = `<tr><th>Product</th>${shops.map(s => `<th class="num"><span class="dot" style="background:${COLORS[s]}"></span>${data.shops[s]}</th>`).join("")}</tr>`;
+  const body = skus.map(sku => {
+    const best = cheapest(last, sku);
+    return `<tr><td>${data.products[sku]}</td>${shops.map(s => {
+      const c = last.prices[s][sku], p = prev?.prices[s]?.[sku];
+      if (!c) return `<td class="num">–</td>`;
+      const ch = p?.price ? (c.price - p.price) / p.price * 100 : 0;
+      const cls = Math.abs(ch) < 0.05 ? "flat" : ch < 0 ? "down" : "up";
+      const arrow = cls === "flat" ? "no change" : (ch < 0 ? "▼ " : "▲ ") + Math.abs(ch).toFixed(1) + "%";
+      if (!c.in_stock) return `<td class="num"><span class="oos">${fmt(c.price)}</span><span class="oos-tag">out of stock</span></td>`;
+      return `<td class="num"><span class="${s === best ? "best" : ""}">${fmt(c.price)}</span><span class="delta ${cls}">${arrow}</span></td>`;
+    }).join("")}</tr>`;
+  }).join("");
+  document.getElementById("table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
+}
+
+function cheapest(snap, sku) {
+  let best = null, bp = Infinity;
+  for (const [s, items] of Object.entries(snap.prices)) {
+    const it = items[sku];
+    if (it && it.in_stock && it.price < bp) { bp = it.price; best = s; }
+  }
+  return best;
+}
+
+function recentDrops(H, days, threshold) {
+  const out = [];
+  H.slice(-days - 1).forEach((snap, i, arr) => {
+    if (!i) return;
+    const before = arr[i - 1];
+    for (const [s, items] of Object.entries(snap.prices))
+      for (const [sku, it] of Object.entries(items)) {
+        const b = before.prices[s]?.[sku];
+        if (!b?.price) continue;
+        const ch = (it.price - b.price) / b.price * 100;
+        if (ch <= -threshold) out.push({ date: snap.date, shop: s, sku, old: b.price, new: it.price, change: ch.toFixed(1) });
+      }
+  });
+  return out;
+}
+
+function drawChart(H, shops) {
+  const labels = H.map(h => shortDate(h.date));
+  const datasets = shops.map(s => ({
+    label: data.shops[s],
+    data: H.map(h => h.prices[s]?.[current]?.price ?? null),
+    borderColor: COLORS[s], backgroundColor: COLORS[s],
+    borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, pointHoverBorderWidth: 2, pointHoverBorderColor: "#fff",
+    tension: 0,
+  }));
+  if (chart) { chart.data.labels = labels; chart.data.datasets = datasets; chart.update(); return; }
+  chart = new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      maintainAspectRatio: false, animation: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: "#16202a", padding: 10, boxPadding: 4, usePointStyle: true,
+          callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#7c8792", maxTicksLimit: 8, font: { family: "Manrope" } }, border: { color: "#e6e8eb" } },
+        y: { grid: { color: "#eef0f2" }, border: { display: false }, ticks: { color: "#7c8792", font: { family: "Manrope" }, callback: v => v + " zł" } },
+      },
+    },
+    plugins: [{ // vertical crosshair on hover
+      id: "crosshair",
+      afterDraw(c) {
+        const a = c.tooltip?.getActiveElements?.() || [];
+        if (!a.length) return;
+        const x = a[0].element.x, { top, bottom } = c.chartArea, ctx = c.ctx;
+        ctx.save(); ctx.strokeStyle = "#c7cdd3"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke(); ctx.restore();
+      },
+    }],
+  });
+}
+</script>
+</body>
+</html>

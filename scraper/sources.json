@@ -1,0 +1,37 @@
+{
+  "alert_drop_percent": 5,
+  "shops": [
+    {
+      "id": "alfa",
+      "name": "AlfaTech",
+      "url": "{base}/api/shop?s=alfa",
+      "item": ".product-card",
+      "sku": {"attr": "data-sku"},
+      "name_selector": ".product-card__title",
+      "price_selector": ".product-card__price .amount",
+      "stock_selector": ".product-card__stock",
+      "in_stock_text": "Dostępny"
+    },
+    {
+      "id": "voltix",
+      "name": "Voltix",
+      "url": "{base}/api/shop?s=voltix",
+      "item": "table.offers tbody tr",
+      "sku": {"attr": "id", "strip_prefix": "sku-"},
+      "name_selector": "td.name",
+      "price_selector": "td.price",
+      "stock_selector": "td.avail",
+      "in_stock_text": "in stock"
+    },
+    {
+      "id": "mediaplus",
+      "name": "MediaPlus",
+      "url": "{base}/api/shop?s=mediaplus",
+      "item": "li.offer",
+      "sku": {"attr": "data-product-id"},
+      "name_selector": ".offer-name",
+      "price_selector": ".offer-price",
+      "stock_attr": "data-available"
+    }
+  ]
+}

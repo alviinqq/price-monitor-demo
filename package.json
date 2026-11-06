@@ -1,0 +1,8 @@
+{
+  "name": "price-monitor-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Competitor price monitor: Python scraper, Telegram alerts, dashboard",
+  "scripts": { "dev": "node dev-server.js" },
+  "license": "MIT"
+}

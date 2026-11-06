@@ -1,0 +1,32 @@
+name: Daily price check
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # every day 06:17 UTC
+  workflow_dispatch: {}    # "Run workflow" button for a manual check
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r scraper/requirements.txt
+      - name: Scrape prices and send alerts
+        env:
+          SHOP_BASE: ${{ vars.SHOP_BASE }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scraper/monitor.py
+      - name: Save new prices
+        run: |
+          git config user.name "price-bot"
+          git config user.email "price-bot@users.noreply.github.com"
+          git add data/prices.json
+          git diff --cached --quiet || git commit -m "Prices $(date -u +%F)"
+          git push
