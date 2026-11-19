@@ -4826,7 +4826,90 @@
      }
     }
    }
+  },
+  {
+   "date": "2026-11-19",
+   "prices": {
+    "alfa": {
+     "hp-anc-300": {
+      "price": 438.99,
+      "in_stock": true
+     },
+     "ssd-1tb-nv": {
+      "price": 303.99,
+      "in_stock": true
+     },
+     "kb-mech-87": {
+      "price": 322.99,
+      "in_stock": true
+     },
+     "mon-27-qhd": {
+      "price": 1023.99,
+      "in_stock": true
+     },
+     "rt-ax3000": {
+      "price": 250.99,
+      "in_stock": true
+     },
+     "cam-4k-web": {
+      "price": 410.99,
+      "in_stock": true
+     }
+    },
+    "voltix": {
+     "hp-anc-300": {
+      "price": 464.99,
+      "in_stock": true
+     },
+     "ssd-1tb-nv": {
+      "price": 276.99,
+      "in_stock": true
+     },
+     "kb-mech-87": {
+      "price": 311.99,
+      "in_stock": true
+     },
+     "mon-27-qhd": {
+      "price": 1087.99,
+      "in_stock": false
+     },
+     "rt-ax3000": {
+      "price": 257.99,
+      "in_stock": true
+     },
+     "cam-4k-web": {
+      "price": 379.99,
+      "in_stock": true
+     }
+    },
+    "mediaplus": {
+     "hp-anc-300": {
+      "price": 468.99,
+      "in_stock": true
+     },
+     "ssd-1tb-nv": {
+      "price": 300.99,
+      "in_stock": true
+     },
+     "kb-mech-87": {
+      "price": 358.99,
+      "in_stock": true
+     },
+     "mon-27-qhd": {
+      "price": 1160.99,
+      "in_stock": true
+     },
+     "rt-ax3000": {
+      "price": 228.99,
+      "in_stock": true
+     },
+     "cam-4k-web": {
+      "price": 428.99,
+      "in_stock": true
+     }
+    }
+   }
   }
  ],
- "updated_at": "2026-11-18T15:39:56+00:00"
+ "updated_at": "2026-11-19T15:45:14+00:00"
 }
